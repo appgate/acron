@@ -2,7 +2,7 @@
 name = "acron"
 version = "0.1.1"
 description = "Lightweight scheduler"
-authors = ["Thomas Cellerier <thomas.cellerier@appgate.com>"]
+authors = ["Aitor Iturri <aitor.iturri@appgate.com>", "Thomas Cellerier <thomas.cellerier@appgate.com>"]
 license = "MIT"
 readme = "README.rst"
 homepage = "https://github.com/appgate/acron"
