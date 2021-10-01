@@ -3,6 +3,8 @@ name = "acron"
 version = "0.1.0"
 description = "Lightweight scheduler"
 authors = ["Thomas Cellerier <thomas.cellerier@appgate.com>"]
+license = "MIT"
+readme = "README.rst"
 
 [tool.poetry.dependencies]
 python = "^3.8"
