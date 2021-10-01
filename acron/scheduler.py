@@ -31,10 +31,10 @@ def cron_date(timestamp: float, tz: timezone) -> str:
 
 @dataclasses.dataclass(frozen=True)
 class Job:
-    name: str
     schedule: str
-    enabled: bool
     func: Callable[[], Awaitable[None]]
+    name: Optional[str] = None
+    enabled: bool = True
 
 
 @dataclasses.dataclass(frozen=True)
