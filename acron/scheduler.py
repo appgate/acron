@@ -53,8 +53,8 @@ def croniter_sort_jobs(
     jobs: Set[Job], tz: timezone, n: int, offset: Optional[float]
 ) -> List[Tuple[float, Job]]:
     """
-    Compute the n first tests needed to be scheduled from the test of tests.
-    If offset is defined then the tests computed will be those that need to run after that time.
+    Compute the n first jobs needed to be scheduled.
+    If offset is defined then the jobs computed will be those that need to run after that time.
     """
     xs: List[Tuple[float, Job]] = []
     if offset:
@@ -73,22 +73,22 @@ def cancel_old_jobs(
     generation: int, tasks: Dict[int, List[ScheduledJobHandle]]
 ) -> None:
     """
-    Cancel all the scheduled tests.
+    Cancel all the scheduled jobs.
     """
-    for scheduled_test, hs in tasks.get(generation, []):
-        scheduled_test.event.set()
+    for scheduled_job, hs in tasks.get(generation, []):
+        scheduled_job.event.set()
         hs.cancel()
 
 
 def remove_completed_jobs(gen: int, tasks: Dict[int, List[ScheduledJobHandle]]) -> None:
     """
-    Removes the scheduled tests already completed.
+    Removes the scheduled jobs already completed.
     """
     xs = []
-    for scheduled_test, hs in tasks.get(gen, []):
-        if scheduled_test.event.is_set():
+    for scheduled_job, hs in tasks.get(gen, []):
+        if scheduled_job.event.is_set():
             continue
-        xs.append((scheduled_test, hs))
+        xs.append((scheduled_job, hs))
     tasks[gen] = xs
 
 
@@ -102,8 +102,8 @@ def schedule_jobs(
     dry_run: bool,
 ) -> float:
     """
-    Schedule the next tests from the defined tests.
-    It returns the timestamp for the last test scheduled.
+    Schedule the next jobs from the defined jobs.
+    It returns the timestamp for the last job scheduled.
     """
     loop = asyncio.get_running_loop()
     new_jobs = croniter_sort_jobs(jobs, tz, n, offset)
@@ -112,20 +112,20 @@ def schedule_jobs(
         delta = datetime.fromtimestamp(when).astimezone(tz=tz) - datetime.now(tz=tz)
         # We need to create function here to capture the lexical context of
         # the parameters
-        scheduled_test = ScheduledJob(
+        scheduled_job = ScheduledJob(
             job=job,
             when=when,
             event=e,
             dry_run=dry_run,
         )
         # We need to call the lambda here because the coroutine needs to be
-        # created when the test is launched, otherwise no one is awaiting it
+        # created when the job is launched, otherwise no one is awaiting it
         # and python complains.
         h = loop.call_later(
             delta / timedelta(seconds=1),
             lambda f: asyncio.ensure_future(job.func()),
         )
-        tasks[generation].append((scheduled_test, h))
+        tasks[generation].append((scheduled_job, h))
     return new_jobs[-1][0]
 
 
@@ -139,13 +139,13 @@ def show_scheduled_jobs_info(
         log.info("[scheduler] No jobs scheduled yet")
         return
     log.info("[scheduler] Next jobs scheduled:")
-    for scheduled_test, _ in scheduled_jobs.get(gen, []):
-        if not scheduled_test.event.is_set():
-            when = cron_date(timestamp=scheduled_test.when, tz=tz)
+    for scheduled_job, _ in scheduled_jobs.get(gen, []):
+        if not scheduled_job.event.is_set():
+            when = cron_date(timestamp=scheduled_job.when, tz=tz)
             log.info(
                 "[scheduler]  * [%s] %s at %s",
-                scheduled_test.id,
-                scheduled_test.job.name,
+                scheduled_job.id,
+                scheduled_job.job.name,
                 when,
             )
 
@@ -193,7 +193,7 @@ class Scheduler:
 
     def schedule_jobs(self) -> None:
         total_jobs = sum(
-            1 for scheduled_test, _ in self._scheduled_jobs[self._generation]
+            1 for scheduled_job, _ in self._scheduled_jobs[self._generation]
         )
         num_active_jobs = sum(
             1
@@ -206,7 +206,7 @@ class Scheduler:
         free_slots = self._scheduled_jobs_size - num_active_jobs
         log.debug("[scheduler] Number of free slots: %d", free_slots)
         if free_slots > 0 and self._defined_jobs:
-            # we did not update the generation, keep queueing tests,
+            # we did not update the generation, keep queueing jobs,
             self._last_job_time = schedule_jobs(
                 tasks=self._scheduled_jobs,
                 jobs=self._defined_jobs,
