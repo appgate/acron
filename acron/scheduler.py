@@ -5,7 +5,7 @@ import itertools
 import logging
 import uuid
 from datetime import datetime, timedelta, timezone
-from typing import Dict, List, Tuple, Set, Optional, Callable
+from typing import Dict, List, Tuple, Set, Optional, Callable, Awaitable
 
 from croniter import croniter
 
@@ -34,7 +34,7 @@ class Job:
     name: str
     schedule: str
     enabled: bool
-    func: Callable[[], None]
+    func: Callable[[], Awaitable[None]]
 
 
 @dataclasses.dataclass(frozen=True)
@@ -123,7 +123,7 @@ def schedule_jobs(
         # and python complains.
         h = loop.call_later(
             delta / timedelta(seconds=1),
-            functools.partial(job.func, dry_run=dry_run),  # type: ignore
+            lambda f: asyncio.ensure_future(job.func()),
         )
         tasks[generation].append((scheduled_test, h))
     return new_jobs[-1][0]

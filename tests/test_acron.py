@@ -33,8 +33,12 @@ async def test_context_manager():
 async def test_schedule_job():
     s = Scheduler()
     job_ran = asyncio.Event()
+
+    async def job_func():
+        job_ran.set()
+
     test_job = Job(
-        name="test", schedule="0/1 * * * *", enabled=True, func=lambda: job_ran.set()
+        name="test", schedule="0/1 * * * *", enabled=True, func=job_func
     )
     jobs = {test_job}
     now = datetime.now()
@@ -54,6 +58,6 @@ async def test_schedule_job():
     # Make sure the correct job is scheduled
     for sj in scheduled_jobs:
         assert sj.job == test_job
-        sj.job.func()
+        await sj.job.func()
         assert job_ran.is_set()
         job_ran.clear()
