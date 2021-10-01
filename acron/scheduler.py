@@ -232,11 +232,13 @@ class Scheduler:
         self._scheduler_future: Optional["asyncio.Future[None]"] = None
 
     async def _run(self) -> None:
-        self._jobs_queue = asyncio.Queue()
-        self._stop_event = asyncio.Event()
         await run_scheduler(self._jobs_queue, self._tz, stop=self._stop_event)
 
-    async def start(self) -> None:
+    def start(self) -> None:
+        assert self._jobs_queue is None
+        assert self._stop_event is None
+        self._jobs_queue = asyncio.Queue()
+        self._stop_event = asyncio.Event()
         self._scheduler_future = asyncio.ensure_future(self._run())
 
     def stop(self) -> None:
@@ -253,3 +255,15 @@ class Scheduler:
     async def update_jobs(self, jobs: Set[Job]) -> None:
         assert self._jobs_queue is not None
         await self._jobs_queue.put(jobs)
+
+    async def __aenter__(self) -> 'Scheduler':
+        self.start()
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
+        self.stop()
+        await self.wait()
+
+    @property
+    def running(self) -> bool:
+        return self._scheduler_future is not None and not self._scheduler_future.done()
