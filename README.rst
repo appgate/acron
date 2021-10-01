@@ -26,4 +26,7 @@ Based on croniter to support the crontab syntax.
             await stop.wait()
 
     if __name__ == '__main__':
-        asyncio.run(run_jobs_forever())
+        try:
+            asyncio.run(run_jobs_forever())
+        except KeyboardInterrupt:
+            print('Bye.')

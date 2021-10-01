@@ -123,7 +123,7 @@ def schedule_jobs(
         # and python complains.
         h = loop.call_later(
             delta / timedelta(seconds=1),
-            lambda f: asyncio.ensure_future(job.func()),
+            lambda: asyncio.ensure_future(job.func()),
         )
         tasks[generation].append((scheduled_job, h))
     return new_jobs[-1][0]
@@ -264,6 +264,11 @@ class Scheduler:
         self._scheduler_future = None
         self._jobs_queue = None
 
+    def cleanup(self) -> None:
+        for jobs in self._scheduled_jobs.values():
+            for job, handle in jobs:
+                handle.cancel()
+
     async def update_jobs(self, jobs: Set[Job]) -> None:
         assert self._jobs_queue is not None
         await self._jobs_queue.put(jobs)
@@ -275,6 +280,7 @@ class Scheduler:
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
         self.stop()
         await self.wait()
+        self.cleanup()
 
     @property
     def running(self) -> bool:
