@@ -5,7 +5,7 @@ import itertools
 import logging
 import uuid
 from datetime import datetime, timedelta, timezone
-from typing import Dict, List, Tuple, Set, Optional
+from typing import Dict, List, Tuple, Set, Optional, Callable
 
 from croniter import croniter
 import pytz
@@ -28,11 +28,8 @@ def cron_date(timestamp: float, tz: timezone) -> str:
 class Job:
     name: str
     schedule: str
-    enabled: bool = True
-
-    def __call__(self, dry_run: bool) -> None:
-        # Default job that does nothing.
-        pass
+    enabled: bool
+    func: Callable[[bool], None]
 
 
 @dataclasses.dataclass(frozen=True)
@@ -121,7 +118,7 @@ def schedule_jobs(
         # and python complains.
         h = loop.call_later(
             delta / timedelta(seconds=1),
-            functools.partial(job.__call__, dry_run=dry_run),
+            functools.partial(job.func, dry_run=dry_run),
         )
         tasks[generation].append((scheduled_test, h))
     return new_jobs[-1][0]
