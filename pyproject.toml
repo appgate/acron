@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "acron"
-version = "0.1.0"
+version = "0.1.1"
 description = "Lightweight scheduler"
 authors = ["Thomas Cellerier <thomas.cellerier@appgate.com>"]
 license = "MIT"
