@@ -1,5 +1,4 @@
 import asyncio
-import dataclasses
 from datetime import datetime
 
 import pytest
