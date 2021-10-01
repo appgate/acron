@@ -8,15 +8,20 @@ from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Tuple, Set, Optional, Callable
 
 from croniter import croniter
-import pytz
 
 __all__ = [
     "Job",
     "Scheduler",
+    "ScheduledJob",
 ]
 
 
 log = logging.getLogger("acron")
+
+
+def enable_acron_debug_logs():
+    log.addHandler(logging.StreamHandler())
+    log.setLevel(logging.DEBUG)
 
 
 def cron_date(timestamp: float, tz: timezone) -> str:
@@ -29,7 +34,7 @@ class Job:
     name: str
     schedule: str
     enabled: bool
-    func: Callable[[bool], None]
+    func: Callable[[], None]
 
 
 @dataclasses.dataclass(frozen=True)
@@ -118,7 +123,7 @@ def schedule_jobs(
         # and python complains.
         h = loop.call_later(
             delta / timedelta(seconds=1),
-            functools.partial(job.func, dry_run=dry_run),
+            functools.partial(job.func, dry_run=dry_run),  # type: ignore
         )
         tasks[generation].append((scheduled_test, h))
     return new_jobs[-1][0]
@@ -128,12 +133,12 @@ def show_scheduled_jobs_info(
     scheduled_jobs: Dict[int, List[ScheduledJobHandle]], gen: int, tz: timezone
 ) -> None:
     """
-    Show information for the next tests scheduled.
+    Show information for the next jobs scheduled.
     """
     if not scheduled_jobs.get(gen, []):
-        log.info("[scheduler] No tests scheduled yet")
+        log.info("[scheduler] No jobs scheduled yet")
         return
-    log.info("[scheduler] Next tests scheduled:")
+    log.info("[scheduler] Next jobs scheduled:")
     for scheduled_test, _ in scheduled_jobs.get(gen, []):
         if not scheduled_test.event.is_set():
             when = cron_date(timestamp=scheduled_test.when, tz=tz)
@@ -145,91 +150,101 @@ def show_scheduled_jobs_info(
             )
 
 
-async def run_scheduler(
-    scheduler_queue: "asyncio.Queue[Set[Job]]",
-    tz: timezone,
-    *,
-    scheduled_jobs_size: int = 32,
-    dry_run: bool = False,
-    stop: Optional[asyncio.Event] = None
-) -> None:
-    """
-    Get new TestPlan and add new tests into the runner queue with tests.
-    Every time it gets a new test plan it checks if there are changes.
-
-    It case of changes in the test plan, a new test generation is created and the current
-    scheduled tests are cancelled. After this the new tests are scheduled in batches
-    (at least SCHEDULED_TESTS_SIZE, defined in ctx, will be scheduled)
-
-    When there are not changes in the test plan, it will just wait for completed tests
-    and new tests will be scheduled (same amount of tests as completed).
-    """
-    defined_jobs: Optional[Set[Job]] = None
-    scheduled_jobs: Dict[int, List[ScheduledJobHandle]] = {}
-    generation = 0
-    last_job_time = None
-    last_scheduled_info = datetime.now()
-    last_scheduled_delay = 3600
-    while stop is None or not stop.is_set():
-        try:
-            # Remove completed tests
-            remove_completed_jobs(generation, scheduled_jobs)
-            event: Set[Job] = await asyncio.wait_for(scheduler_queue.get(), timeout=10)
-            new_jobs = set(job for job in event)
-            if (defined_jobs and defined_jobs != new_jobs) or not defined_jobs:
-                # cancel now old tests
-                cancel_old_jobs(generation, scheduled_jobs)
-                defined_jobs = {job for job in event if job.enabled}
-                del scheduled_jobs[generation]
-                generation = generation + 1
-                scheduled_jobs[generation] = []
-                last_job_time = None
-            else:
-                if (
-                    datetime.now() - last_scheduled_info
-                ).seconds > last_scheduled_delay:
-                    show_scheduled_jobs_info(
-                        scheduled_jobs=scheduled_jobs, gen=generation, tz=tz
-                    )
-                    last_scheduled_info = datetime.now()
-        except asyncio.TimeoutError:
-            pass
-        total_tests = sum(1 for scheduled_test, _ in scheduled_jobs[generation])
-        num_active_jobs = sum(
-            1
-            for scheduled_test, _ in scheduled_jobs[generation]
-            if not scheduled_test.event.is_set()
-        )
-        log.debug(
-            "[scheduler] Number of active tests: %d/%d", num_active_jobs, total_tests
-        )
-        free_slots = scheduled_jobs_size - num_active_jobs
-        log.debug("[scheduler] Number of free slots: %d", free_slots)
-        if free_slots > 0 and defined_jobs:
-            # we did not update the generation, keep queueing tests,
-            last_job_time = schedule_jobs(
-                tasks=scheduled_jobs,
-                jobs=defined_jobs,
-                n=free_slots,
-                generation=generation,
-                tz=tz,
-                offset=last_job_time,
-                dry_run=dry_run,
-            )
-            show_scheduled_jobs_info(
-                scheduled_jobs=scheduled_jobs, gen=generation, tz=tz
-            )
-
-
 class Scheduler:
-    def __init__(self, tz: Optional[timezone] = None) -> None:
+    def __init__(
+        self, tz: Optional[timezone] = None, *, now: Optional[datetime] = None
+    ) -> None:
         self._jobs_queue: "Optional[asyncio.Queue[Set[Job]]]" = None
         self._tz = tz if tz is not None else timezone.utc
         self._stop_event: Optional[asyncio.Event] = None
         self._scheduler_future: Optional["asyncio.Future[None]"] = None
+        self._defined_jobs: Optional[Set[Job]] = None
+        self._scheduled_jobs: Dict[int, List[ScheduledJobHandle]] = {}
+        self._scheduled_jobs_size = 32
+        self._generation = 0
+        self._last_job_time: Optional[float] = None
+        self._last_scheduled_info = now or datetime.now()
+        self._last_scheduled_delay = 3600
+        self._dry_run = False
+
+    def process_jobs_update(
+        self, new_jobs: Set[Job], *, now: Optional[datetime] = None
+    ) -> None:
+        if now is None:
+            now = datetime.now()
+        if (
+            self._defined_jobs and self._defined_jobs != new_jobs
+        ) or not self._defined_jobs:
+            cancel_old_jobs(self._generation, self._scheduled_jobs)
+            self._defined_jobs = {job for job in new_jobs if job.enabled}
+            if self._generation > 0:
+                del self._scheduled_jobs[self._generation]
+            self._generation = self._generation + 1
+            self._scheduled_jobs[self._generation] = []
+            self._last_job_time = None
+        else:
+            if (now - self._last_scheduled_info).seconds > self._last_scheduled_delay:
+                show_scheduled_jobs_info(
+                    scheduled_jobs=self._scheduled_jobs,
+                    gen=self._generation,
+                    tz=self._tz,
+                )
+                self._last_scheduled_info = now
+
+    def schedule_jobs(self) -> None:
+        total_jobs = sum(
+            1 for scheduled_test, _ in self._scheduled_jobs[self._generation]
+        )
+        num_active_jobs = sum(
+            1
+            for scheduled_job, _ in self._scheduled_jobs[self._generation]
+            if not scheduled_job.event.is_set()
+        )
+        log.debug(
+            "[scheduler] Number of active jobs: %d/%d", num_active_jobs, total_jobs
+        )
+        free_slots = self._scheduled_jobs_size - num_active_jobs
+        log.debug("[scheduler] Number of free slots: %d", free_slots)
+        if free_slots > 0 and self._defined_jobs:
+            # we did not update the generation, keep queueing tests,
+            self._last_job_time = schedule_jobs(
+                tasks=self._scheduled_jobs,
+                jobs=self._defined_jobs,
+                n=free_slots,
+                generation=self._generation,
+                tz=self._tz,
+                offset=self._last_job_time,
+                dry_run=self._dry_run,
+            )
+            show_scheduled_jobs_info(
+                scheduled_jobs=self._scheduled_jobs, gen=self._generation, tz=self._tz
+            )
+
+    def scheduled_jobs(self) -> List[ScheduledJob]:
+        return [
+            scheduled_job for scheduled_job, _ in self._scheduled_jobs[self._generation]
+        ]
 
     async def _run(self) -> None:
-        await run_scheduler(self._jobs_queue, self._tz, stop=self._stop_event)
+        assert self._stop_event is not None
+        assert self._jobs_queue is not None
+        while not self._stop_event.is_set():
+            remove_completed_jobs(self._generation, self._scheduled_jobs)
+            # Wait for new jobs, make sure we don't wait the whole timeout if stopped
+            get_future = asyncio.ensure_future(self._jobs_queue.get())
+            stop_future = asyncio.ensure_future(self._stop_event.wait())
+            done, pending = await asyncio.wait(
+                (get_future, stop_future),
+                timeout=10.0,
+                return_when=asyncio.FIRST_COMPLETED,
+            )
+            for future in pending:
+                future.cancel()
+            for future in done:
+                if future == get_future:
+                    jobs = get_future.result()
+                    self.process_jobs_update(jobs)
+            self.schedule_jobs()
 
     def start(self) -> None:
         assert self._jobs_queue is None
@@ -253,7 +268,7 @@ class Scheduler:
         assert self._jobs_queue is not None
         await self._jobs_queue.put(jobs)
 
-    async def __aenter__(self) -> 'Scheduler':
+    async def __aenter__(self) -> "Scheduler":
         self.start()
         return self
 
