@@ -2,7 +2,9 @@ Lightweight scheduler for python asyncio
 
 Based on croniter to support the crontab syntax.
 
-# Usage:
+=====
+Usage
+=====
 
 .. code:: python
 
@@ -30,7 +32,9 @@ Based on croniter to support the crontab syntax.
         except KeyboardInterrupt:
             print("Bye.")
 
-# Local development
+=================
+Local development
+=================
 
 The project uses poetry to run the test, the linter and to build the artifacts.
 
@@ -41,30 +45,32 @@ https://python-poetry.org/docs/ ).
 To use docker, first generate the docker image. Run this command from the top
 level directory in the repository:
 
-`docker build -t acron-builder -f docker/Dockerfile .`
+.. code-block:: console
+
+   docker build -t acron-builder -f docker/Dockerfile .
 
 Now you can use it to build or run the linter/tests:
 
+.. code-block:: console
 
-```
-$ alias acron-builder="docker run --rm -it -v $PWD/dist:/build/dist acron-builder"
+    $ alias acron-builder="docker run --rm -it -v $PWD/dist:/build/dist acron-builder"
 
-$ acron-builder run pytest tests
-=============================================================================================== test session starts ================================================================================================
-platform linux -- Python 3.9.7, pytest-5.4.3, py-1.10.0, pluggy-0.13.1
-rootdir: /build
-plugins: asyncio-0.15.1
-collected 4 items
-tests/test_acron.py ....                                                                                                                                                                                     [100%]
-================================================================================================ 4 passed in 0.04s =================================================================================================
+    $ acron-builder run pytest tests
+    =============================================================================================== test session starts ================================================================================================
+    platform linux -- Python 3.9.7, pytest-5.4.3, py-1.10.0, pluggy-0.13.1
+    rootdir: /build
+    plugins: asyncio-0.15.1
+    collected 4 items
+    tests/test_acron.py ....                                                                                                                                                                                     [100%]
+    ================================================================================================ 4 passed in 0.04s =================================================================================================
 
-$ acron-builder build
-Building acron (0.1.0)
-  - Building sdist
-  - Built acron-0.1.0.tar.gz
-  - Building wheel
-  - Built acron-0.1.0-py3-none-any.whl
+    $ acron-builder build
+    Building acron (0.1.0)
+      - Building sdist
+      - Built acron-0.1.0.tar.gz
+      - Building wheel
+      - Built acron-0.1.0-py3-none-any.whl
 
-$ ls dist
-acron-0.1.0-py3-none-any.whl  acron-0.1.0.tar.gz
-```
+    $ ls dist
+    acron-0.1.0-py3-none-any.whl  acron-0.1.0.tar.gz
+
