@@ -7,10 +7,6 @@ from acron import __version__
 from acron.scheduler import Scheduler, Job
 
 
-def test_version():
-    assert __version__ == "0.1.1"
-
-
 @pytest.mark.asyncio
 async def test_start_stop():
     s = Scheduler()
