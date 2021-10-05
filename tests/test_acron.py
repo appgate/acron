@@ -3,8 +3,8 @@ from datetime import datetime
 
 import pytest
 
-from acron import __version__
-from acron.scheduler import Scheduler, Job
+from acron.scheduler import Scheduler
+from acron.job import Job
 
 
 @pytest.mark.asyncio

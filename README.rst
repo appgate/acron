@@ -16,12 +16,37 @@ Installing acron.
 Usage
 =====
 
-To get started you need a scheduler and at least one job.
-The ``Scheduler`` class can be used as async context manager.
+To get started you need at least one job.
+Use the top level ``acron.run`` function for simple scheduling.
+
+
+.. code:: python
+
+    import asyncio
+    import acron
+
+    async def do_the_thing():
+        print("Doing the thing")
+
+    do_thing = Job(
+        name="Do the thing",
+        schedule="0/1 * * * *",
+        func=do_the_thing,
+    )
+
+    if __name__ == "__main__":
+        try:
+            asyncio.run(acron.run({do_thing}))
+        except KeyboardInterrupt:
+            print("Bye.")
+
+
+For more advanced use cases, the ``Scheduler`` class can be used as async context manager.
 Call ``scheduler.wait()`` to keep it running forever.
 To submit jobs call ``scheduler.update_jobs(jobs)`` with the complete set of jobs.
 
 Running a simple example running a function every hour...
+
 
 .. code:: python
 
@@ -48,6 +73,8 @@ Running a simple example running a function every hour...
             asyncio.run(run_jobs_forever())
         except KeyboardInterrupt:
             print("Bye.")
+
+
 
 
 Specifying a timezone.

@@ -6,12 +6,13 @@ import os
 import time
 import uuid
 from datetime import datetime, timedelta, timezone
-from typing import Dict, List, Tuple, Set, Optional, Callable, Awaitable
+from typing import Dict, List, Tuple, Set, Optional
 
 from croniter import croniter
 
+from acron.job import Job
+
 __all__ = [
-    "Job",
     "Scheduler",
     "ScheduledJob",
 ]
@@ -32,14 +33,6 @@ if os.getenv("ACRON_DEBUG", "") == "TRUE":
 def cron_date(timestamp: float, tz: timezone) -> str:
     fmt = "%Y-%m-%d %H:%M:%S %Z%z"
     return datetime.fromtimestamp(timestamp).astimezone(tz=tz).strftime(fmt)
-
-
-@dataclasses.dataclass(frozen=True)
-class Job:
-    schedule: str
-    func: Callable[[], Awaitable[None]]
-    name: Optional[str] = None
-    enabled: bool = True
 
 
 @dataclasses.dataclass(frozen=True)
