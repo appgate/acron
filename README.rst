@@ -17,9 +17,9 @@ Usage
 =====
 
 To get started you need a scheduler and at least one job.
-The `Scheduler` class can be used as async context manager.
-Call `scheduler.wait()` to keep it running forever.
-To submit jobs call `scheduler.update_jobs()` with the complete set of jobs.
+The ``Scheduler`` class can be used as async context manager.
+Call ``scheduler.wait()`` to keep it running forever.
+To submit jobs call ``scheduler.update_jobs(jobs)`` with the complete set of jobs.
 
 Running a simple example running a function every hour...
 
