@@ -3,7 +3,7 @@ from datetime import datetime
 
 import pytest
 
-from acron.scheduler import Scheduler
+from acron.scheduler import Scheduler, job_context
 from acron.job import Job
 
 
@@ -31,6 +31,8 @@ async def test_schedule_job():
     job_ran = asyncio.Event()
 
     async def job_func():
+        # Make sure the context var is working
+        assert job_context.get().job.name == "test"
         job_ran.set()
 
     test_job = Job(
@@ -54,6 +56,6 @@ async def test_schedule_job():
     # Make sure the correct job is scheduled
     for sj in scheduled_jobs:
         assert sj.job == test_job
-        await sj.job.func()
+        await sj.run()
         assert job_ran.is_set()
         job_ran.clear()
