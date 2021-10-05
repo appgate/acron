@@ -3,8 +3,25 @@ Lightweight scheduler for python asyncio
 Based on croniter to support the crontab syntax.
 
 =====
+Installation
+=====
+
+Installing acron.
+
+.. code:: shell
+
+    $ pip install acron
+
+=====
 Usage
 =====
+
+To get started you need a scheduler and at least one job.
+The `Scheduler` class can be used as async context manager.
+Call `scheduler.wait()` to keep it running forever.
+To submit jobs call `scheduler.update_jobs()` with the complete set of jobs.
+
+Running a simple example running a function every hour...
 
 .. code:: python
 
