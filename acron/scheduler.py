@@ -1,6 +1,5 @@
 import asyncio
 import dataclasses
-import functools
 import itertools
 import logging
 import uuid
