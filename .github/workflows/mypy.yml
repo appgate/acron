@@ -1,0 +1,21 @@
+name: Mypy
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+    - name: Install pipx 
+      run: pip install pipx
+    - name: Install poetry 
+      run: pipx install poetry 
+    - name: Install dev dependencies
+      run: poetry install
+    - name: Run mypy
+      run: mypy acron
+
+
