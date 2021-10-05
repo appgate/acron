@@ -115,3 +115,10 @@ Now you can use it to build or run the linter/tests:
     $ ls dist
     acron-0.1.0-py3-none-any.whl  acron-0.1.0.tar.gz
 
+
+=========
+Debugging
+=========
+
+Debug logging can be enabled by setting the ``ACRON_DEBUG`` environment variable to ``TRUE``.
+
