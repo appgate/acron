@@ -147,7 +147,8 @@ def schedule_jobs(
         # and python complains.
         h = loop.call_later(
             delta / timedelta(seconds=1),
-            lambda: asyncio.create_task(scheduled_job.run()),
+            lambda sj: asyncio.create_task(sj.run()),
+            scheduled_job,
         )
         tasks[generation].append((scheduled_job, h))
     return new_jobs[-1][0]
