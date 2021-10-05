@@ -16,7 +16,7 @@ async def do_the_thing():
 async def run_jobs_forever():
     do_thing = Job(name="Do the thing daily", schedule="11 12 * * *", func=do_the_thing)
 
-    async with Scheduler(ZoneInfo("Europe/Stockholm")) as scheduler:
+    async with Scheduler(ZoneInfo("Europe/Berlin")) as scheduler:
         await scheduler.update_jobs({do_thing})
         await scheduler.wait()
 

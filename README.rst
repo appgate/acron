@@ -59,7 +59,7 @@ For python 3.9+ you can use the standard library's ``zoneinfo`` module to specif
 
     import zoneinfo
 
-    async with Scheduler(tz=zoneinfo.ZoneInfo("Europe/Stockholm")) as scheduler:
+    async with Scheduler(tz=zoneinfo.ZoneInfo("Europe/Berlin")) as scheduler:
         ...
 
 
@@ -70,7 +70,7 @@ For earlier python versions you can use a third party library like ``pytz``.
 
     import pytz
 
-    async with Scheduler(tz=pytz.timezone("Europe/Stockholm")) as scheduler:
+    async with Scheduler(tz=pytz.timezone("Europe/Berlin")) as scheduler:
         ...
 
 =================
