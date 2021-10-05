@@ -2,6 +2,8 @@ import asyncio
 import dataclasses
 import itertools
 import logging
+import os
+import time
 import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Tuple, Set, Optional, Callable, Awaitable
@@ -21,6 +23,10 @@ log = logging.getLogger("acron")
 def enable_acron_debug_logs():
     log.addHandler(logging.StreamHandler())
     log.setLevel(logging.DEBUG)
+
+
+if os.getenv("ACRON_DEBUG", "") == "TRUE":
+    enable_acron_debug_logs()
 
 
 def cron_date(timestamp: float, tz: timezone) -> str:
@@ -45,12 +51,20 @@ class ScheduledJob:
     id: str = dataclasses.field(default_factory=lambda: str(uuid.uuid4()))
 
     async def run(self) -> None:
+        start = time.monotonic()
+        log.debug("[scheduler id=%s] Running scheduled job %s", self.id, self.job.name)
         try:
             # mypy gets confused because we are calling a function but
             # it looks like we are calling a method.
             await self.job.func()  # type: ignore
         finally:
             self.event.set()
+            log.debug(
+                "[scheduler id=%s] Done running job %s after %.1f seconds",
+                self.id,
+                self.job.name,
+                time.monotonic() - start,
+            )
 
 
 ScheduledJobHandle = Tuple[ScheduledJob, asyncio.TimerHandle]
@@ -94,6 +108,11 @@ def remove_completed_jobs(gen: int, tasks: Dict[int, List[ScheduledJobHandle]]) 
     xs = []
     for scheduled_job, hs in tasks.get(gen, []):
         if scheduled_job.event.is_set():
+            log.debug(
+                "[scheduler id=%s] Removing completed job %s",
+                scheduled_job.id,
+                scheduled_job.job.name,
+            )
             continue
         xs.append((scheduled_job, hs))
     tasks[gen] = xs
@@ -141,9 +160,9 @@ def show_scheduled_jobs_info(
     Show information for the next jobs scheduled.
     """
     if not scheduled_jobs.get(gen, []):
-        log.info("[scheduler] No jobs scheduled yet")
+        log.info("[scheduler] No jobs scheduled yet (generation %d)", gen)
         return
-    log.info("[scheduler] Next jobs scheduled:")
+    log.info("[scheduler] Next jobs scheduled (generation %d):", gen)
     for scheduled_job, _ in scheduled_jobs.get(gen, []):
         if not scheduled_job.event.is_set():
             when = cron_date(timestamp=scheduled_job.when, tz=tz)
@@ -177,24 +196,24 @@ class Scheduler:
     ) -> None:
         if now is None:
             now = datetime.now()
+        new_jobs_enabled = {job for job in new_jobs if job.enabled}
         if (
-            self._defined_jobs and self._defined_jobs != new_jobs
+            self._defined_jobs and self._defined_jobs != new_jobs_enabled
         ) or not self._defined_jobs:
             cancel_old_jobs(self._generation, self._scheduled_jobs)
-            self._defined_jobs = {job for job in new_jobs if job.enabled}
+            self._defined_jobs = new_jobs_enabled
             if self._generation > 0:
                 del self._scheduled_jobs[self._generation]
             self._generation = self._generation + 1
             self._scheduled_jobs[self._generation] = []
             self._last_job_time = None
-        else:
-            if (now - self._last_scheduled_info).seconds > self._last_scheduled_delay:
-                show_scheduled_jobs_info(
-                    scheduled_jobs=self._scheduled_jobs,
-                    gen=self._generation,
-                    tz=self._tz,
-                )
-                self._last_scheduled_info = now
+        elif (now - self._last_scheduled_info).seconds > self._last_scheduled_delay:
+            show_scheduled_jobs_info(
+                scheduled_jobs=self._scheduled_jobs,
+                gen=self._generation,
+                tz=self._tz,
+            )
+            self._last_scheduled_info = now
 
     def schedule_jobs(self) -> None:
         total_jobs = sum(
