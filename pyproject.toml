@@ -9,14 +9,12 @@ homepage = "https://github.com/appgate/acron"
 
 [tool.poetry.dependencies]
 python = "^3.8"
-pytz = "^2021.1"
 croniter = "^1.0.15"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
 black = "^21.9b0"
 mypy = "^0.910"
-types-pytz = "^2021.1.2"
 types-croniter = "^1.0.0"
 pytest-asyncio = "^0.15.1"
 
