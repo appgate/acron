@@ -47,6 +47,8 @@ class ScheduledJob:
 
     async def run(self) -> None:
         try:
+            # mypy gets confused because we are calling a function but
+            # it looks like we are calling a method.
             await self.job.func()  # type: ignore
         finally:
             self.event.set()
