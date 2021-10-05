@@ -51,6 +51,7 @@ Running a simple example running a function every hour...
 
 
 Specifying a timezone.
+----------------------
 
 For python 3.9+ you can use the standard library's ``zoneinfo`` module to specify a timezone.
 
