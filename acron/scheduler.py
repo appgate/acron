@@ -1,6 +1,5 @@
 import asyncio
 import dataclasses
-import functools
 import itertools
 import logging
 import uuid
@@ -41,9 +40,17 @@ class Job:
 class ScheduledJob:
     job: Job
     when: float
-    event: asyncio.Event
     dry_run: bool
+    event: asyncio.Event = dataclasses.field(default_factory=asyncio.Event)
     id: str = dataclasses.field(default_factory=lambda: str(uuid.uuid4()))
+
+    async def run(self) -> None:
+        try:
+            # mypy gets confused because we are calling a function but
+            # it looks like we are calling a method.
+            await self.job.func()  # type: ignore
+        finally:
+            self.event.set()
 
 
 ScheduledJobHandle = Tuple[ScheduledJob, asyncio.TimerHandle]
@@ -108,14 +115,12 @@ def schedule_jobs(
     loop = asyncio.get_running_loop()
     new_jobs = croniter_sort_jobs(jobs, tz, n, offset)
     for when, job in new_jobs:
-        e = asyncio.Event()
         delta = datetime.fromtimestamp(when).astimezone(tz=tz) - datetime.now(tz=tz)
         # We need to create function here to capture the lexical context of
         # the parameters
         scheduled_job = ScheduledJob(
             job=job,
             when=when,
-            event=e,
             dry_run=dry_run,
         )
         # We need to call the lambda here because the coroutine needs to be
@@ -123,7 +128,7 @@ def schedule_jobs(
         # and python complains.
         h = loop.call_later(
             delta / timedelta(seconds=1),
-            lambda: asyncio.ensure_future(job.func()),
+            lambda: asyncio.create_task(scheduled_job.run()),
         )
         tasks[generation].append((scheduled_job, h))
     return new_jobs[-1][0]
