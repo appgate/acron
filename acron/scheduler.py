@@ -178,7 +178,11 @@ def show_scheduled_jobs_info(
 
 class Scheduler:
     def __init__(
-        self, tz: Optional[timezone] = None, *, now: Optional[datetime] = None
+        self,
+        tz: Optional[timezone] = None,
+        *,
+        now: Optional[datetime] = None,
+        dry_run: bool = False
     ) -> None:
         self._jobs_queue: "Optional[asyncio.Queue[Set[Job]]]" = None
         self._tz = tz if tz is not None else timezone.utc
@@ -191,7 +195,7 @@ class Scheduler:
         self._last_job_time: Optional[float] = None
         self._last_scheduled_info = now or datetime.now()
         self._last_scheduled_delay = 3600
-        self._dry_run = False
+        self._dry_run = dry_run
 
     def process_jobs_update(
         self, new_jobs: Set[Job], *, now: Optional[datetime] = None
