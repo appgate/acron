@@ -9,9 +9,7 @@ async def do_the_thing():
 
 async def run_jobs_forever():
     do_thing = Job(
-        name="Do the thing once a minute",
-        schedule="0/1 * * * *",
-        func=do_the_thing,
+        name="Do the thing once a minute", schedule="0/1 * * * *", func=do_the_thing
     )
 
     async with Scheduler() as scheduler:
