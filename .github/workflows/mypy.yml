@@ -16,6 +16,5 @@ jobs:
     - name: Install dev dependencies
       run: poetry install
     - name: Run mypy
-      run: mypy acron
-
+      run: poetry run mypy acron
 
