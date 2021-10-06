@@ -77,7 +77,7 @@ Running a simple example running a function every hour...
 
 
 
-Specifying a timezone.
+Specifying a timezone
 ----------------------
 
 For python 3.9+ you can use the standard library's ``zoneinfo`` module to specify a timezone.
@@ -99,6 +99,23 @@ For earlier python versions you can use a third party library like ``pytz``.
 
     async with Scheduler(tz=pytz.timezone("Europe/Berlin")) as scheduler:
         ...
+
+
+Job context
+-----------
+
+It is possible to retrieve the context for the scheduled job from the running
+job function using ``job_context()``. This returns a ``JobContext`` containing
+a reference to the ``ScheduledJob``. The ``job_context()`` function is implemented
+using contextvars to provide the correct context to the matching asyncio task.
+
+.. code:: python
+
+    async def my_job_func():
+        job_id = acron.job_context().scheduled_job.id
+        job_name = acron.job_context().scheduled_job.job.name
+        print(f"Running job {job_id!r}, scheduled with id {job_id}")
+
 
 =================
 Local development
