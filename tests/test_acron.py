@@ -32,7 +32,7 @@ async def test_schedule_job():
 
     async def job_func():
         # Make sure the context var is working
-        assert job_context.get().job.name == "test"
+        assert job_context().scheduled_job.job.name == "test"
         job_ran.set()
 
     test_job = Job(

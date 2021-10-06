@@ -16,6 +16,7 @@ from acron.job import Job
 __all__ = [
     "Scheduler",
     "ScheduledJob",
+    "JobContext",
     "job_context",
 ]
 
@@ -48,12 +49,13 @@ class ScheduledJob:
     async def run(self) -> None:
         log.debug("[scheduler id=%s] Running scheduled job %s", self.id, self.job.name)
         start = time.monotonic()
-        job_context.set(self)
+        token = _job_context.set(JobContext(self))
         try:
             # mypy gets confused because we are calling a function but
             # it looks like we are calling a method.
             await self.job.func()  # type: ignore
         finally:
+            _job_context.reset(token)
             self.event.set()
             log.debug(
                 "[scheduler id=%s] Done running job %s after %.1f seconds",
@@ -63,9 +65,16 @@ class ScheduledJob:
             )
 
 
-job_context: contextvars.ContextVar[ScheduledJob] = contextvars.ContextVar(
-    "job_context"
-)
+@dataclasses.dataclass(frozen=True)
+class JobContext:
+    scheduled_job: ScheduledJob
+
+
+_job_context: contextvars.ContextVar[JobContext] = contextvars.ContextVar("acron_job_context")
+
+
+def job_context() -> JobContext:
+    return _job_context.get()
 
 
 ScheduledJobHandle = Tuple[ScheduledJob, asyncio.TimerHandle]
