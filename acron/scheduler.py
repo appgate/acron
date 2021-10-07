@@ -70,7 +70,9 @@ class JobContext:
     scheduled_job: ScheduledJob
 
 
-_job_context: contextvars.ContextVar[JobContext] = contextvars.ContextVar("acron_job_context")
+_job_context: contextvars.ContextVar[JobContext] = contextvars.ContextVar(
+    "acron_job_context"
+)
 
 
 def job_context() -> JobContext:
