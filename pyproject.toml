@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "acron"
-version = "0.1.11"
+version = "0.1.12"
 description = "Lightweight scheduler"
 authors = ["Aitor Iturri <aitor.iturri@appgate.com>", "Thomas Cellerier <thomas.cellerier@appgate.com>"]
 license = "MIT"
@@ -8,7 +8,7 @@ readme = "README.rst"
 homepage = "https://github.com/appgate/acron"
 
 [tool.poetry.dependencies]
-python = ">=3.6.2, <3.11"
+python = "^3.6.2"
 croniter = "^1.0.15"
 dataclasses = {version = "^0.8", python = "<3.7"}
 
