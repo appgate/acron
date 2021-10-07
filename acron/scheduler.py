@@ -191,7 +191,8 @@ class Scheduler:
         tz: Optional[timezone] = None,
         *,
         now: Optional[datetime] = None,
-        dry_run: bool = False
+        dry_run: bool = False,
+        scheduled_jobs_size: int = 32,
     ) -> None:
         self._jobs_queue: "Optional[asyncio.Queue[Set[Job]]]" = None
         self._tz = tz if tz is not None else timezone.utc
@@ -199,7 +200,7 @@ class Scheduler:
         self._scheduler_future: Optional["asyncio.Future[None]"] = None
         self._defined_jobs: Optional[Set[Job]] = None
         self._scheduled_jobs: Dict[int, List[ScheduledJobHandle]] = {}
-        self._scheduled_jobs_size = 32
+        self._scheduled_jobs_size = scheduled_jobs_size
         self._generation = 0
         self._last_job_time: Optional[float] = None
         self._last_scheduled_info = now or datetime.now()
