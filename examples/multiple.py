@@ -5,11 +5,11 @@ from acron.scheduler import Scheduler
 from acron.job import Job
 
 
-async def do_the_thing(when: str):
+async def do_the_thing(when: str) -> None:
     print(f"Doing the thing: {when}")
 
 
-async def run_jobs_forever():
+async def run_jobs_forever() -> None:
     do_thing_every_minute = Job[str](
         name="Do the thing once a minute",
         schedule="0/1 * * * *",
