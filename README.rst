@@ -28,17 +28,13 @@ Use the top level ``acron.run`` function for simple scheduling.
     async def do_the_thing():
         print("Doing the thing")
 
-    do_thing = Job(
+    do_thing = acron.SimpleJob(
         name="Do the thing",
         schedule="0/1 * * * *",
         func=do_the_thing,
     )
 
-    if __name__ == "__main__":
-        try:
-            asyncio.run(acron.run({do_thing}))
-        except KeyboardInterrupt:
-            print("Bye.")
+    asyncio.run(acron.run({do_thing}))
 
 
 For more advanced use cases, the ``Scheduler`` class can be used as async context manager.
@@ -51,16 +47,22 @@ Running a simple example running a function every hour...
 .. code:: python
 
     import asyncio
+    import dataclasses
 
     from acron.scheduler import Scheduler, Job
 
-    async def do_the_thing():
-        print("Doing the thing")
+    @dataclasses.dataclass(frozen=True)
+    class ThingData:
+        foo: bool
+
+    async def do_the_thing(data: ThingData):
+        print(f"Doing the thing {data}")
 
     async def run_jobs_forever():
-        do_thing = Job(
+        do_thing = Job[ThingData](
             name="Do the thing",
             schedule="0/1 * * * *",
+            data=ThingData(True),
             func=do_the_thing,
         )
 

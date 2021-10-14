@@ -1,14 +1,10 @@
 from datetime import timezone
 from typing import Iterable, Optional
 
-from acron.job import Job
+from acron.job import Job, SimpleJob
 
 
-__all__ = [
-    "__version__",
-    "run",
-    "Job",
-]
+__all__ = ["__version__", "run", "Job", "SimpleJob"]
 
 
 __version__ = "0.1.14"

@@ -3,8 +3,8 @@ from datetime import datetime
 
 import pytest
 
-from acron.scheduler import Scheduler, job_context
-from acron.job import Job
+from acron.scheduler import Scheduler
+from acron.job import job_context, SimpleJob
 
 
 @pytest.mark.asyncio
@@ -35,7 +35,7 @@ async def test_schedule_job():
         assert job_context().scheduled_job.job.name == "test"
         job_ran.set()
 
-    test_job = Job(
+    test_job = SimpleJob(
         name="test", schedule="0/1 * * * *", enabled=True, func=job_func
     )
     jobs = {test_job}
