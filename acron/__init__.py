@@ -8,7 +8,7 @@ from acron.job import Job, SimpleJob
 __all__ = ["__version__", "run", "Job", "SimpleJob", "logger"]
 
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 
 
 logger = logging.getLogger("acron")
