@@ -7,7 +7,7 @@ from typing import Dict, List, Tuple, Set, Optional
 
 from croniter import croniter
 
-from acron.job import Job, ScheduledJob
+from acron.job import Job, ScheduledJob, _job_context, JobContext
 
 __all__ = ["Scheduler", "ScheduledJob"]
 
@@ -121,11 +121,16 @@ def show_scheduled_jobs_info(
         if not scheduled_job.event.is_set():
             job_str: Optional[str] = None
             if scheduled_job.job.show:
-                job_str = scheduled_job.job.show(scheduled_job)
+                token = _job_context.set(JobContext(scheduled_job))
+                try:
+                    job_str = scheduled_job.job.show(scheduled_job.job.data)
+                finally:
+                    _job_context.reset(token)
+
             log.info(
                 "[scheduler]  * [%s] %s at %s - %s",
                 scheduled_job.id,
-                scheduled_job.job.name,
+                scheduled_job.job.name or "unnamed job",
                 scheduled_job.cron_date,
                 job_str or "no job data",
             )

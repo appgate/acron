@@ -20,7 +20,7 @@ class Job(Generic[TaskT]):
     schedule: str
     data: TaskT
     func: Callable[[TaskT], Awaitable[None]]
-    show: Optional[Callable[["ScheduledJob[TaskT]"], str]] = None
+    show: Optional[Callable[[TaskT], str]] = None
     name: Optional[str] = None
     enabled: bool = True
 
@@ -29,7 +29,7 @@ class Job(Generic[TaskT]):
         schedule: str,
         func: Callable[[], Awaitable[None]],
         *,
-        show: Optional[Callable[["ScheduledJob[Tuple[()]]"], str]] = None,
+        show: Optional[Callable[[], str]] = None,
         name: Optional[str] = None,
         enabled: bool = True
     ) -> "Job[Tuple[()]]":
@@ -38,7 +38,7 @@ class Job(Generic[TaskT]):
             func=lambda _: func(),
             data=(),
             name=name,
-            show=show,
+            show=lambda _: show() if show else "",
             enabled=enabled,
         )
 
