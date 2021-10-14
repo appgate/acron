@@ -1,28 +1,32 @@
 import asyncio
 import functools
 
-from acron.scheduler import Scheduler, Job
+from acron.scheduler import Scheduler
+from acron.job import Job
 
 
-async def do_the_thing(when):
+async def do_the_thing(when: str) -> None:
     print(f"Doing the thing: {when}")
 
 
-async def run_jobs_forever():
-    do_thing_every_minute = Job(
+async def run_jobs_forever() -> None:
+    do_thing_every_minute = Job[str](
         name="Do the thing once a minute",
         schedule="0/1 * * * *",
-        func=functools.partial(do_the_thing, "once a minute"),
+        func=do_the_thing,
+        data="once a minute",
     )
-    do_thing_hourly = Job(
+    do_thing_hourly = Job[str](
         name="Do the thing once an hour",
         schedule="0 */1 * * *",
-        func=functools.partial(do_the_thing, "once an hour"),
+        func=do_the_thing,
+        data="once an hour",
     )
-    do_thing_dayly = Job(
+    do_thing_dayly = Job[str](
         name="Do the thing once a day",
         schedule="0 0 */1 * *",
-        func=functools.partial(do_the_thing, "once a day"),
+        func=do_the_thing,
+        data="once a day",
     )
 
     jobs = {do_thing_every_minute, do_thing_hourly, do_thing_dayly}

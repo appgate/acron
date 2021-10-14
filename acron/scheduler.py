@@ -1,24 +1,15 @@
 import asyncio
-import contextvars
-import dataclasses
 import itertools
 import logging
 import os
-import time
-import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Tuple, Set, Optional
 
 from croniter import croniter
 
-from acron.job import Job
+from acron.job import Job, ScheduledJob, _job_context, JobContext
 
-__all__ = [
-    "Scheduler",
-    "ScheduledJob",
-    "JobContext",
-    "job_context",
-]
+__all__ = ["Scheduler", "ScheduledJob"]
 
 
 log = logging.getLogger("acron")
@@ -31,52 +22,6 @@ def enable_acron_debug_logs():
 
 if os.getenv("ACRON_DEBUG", "") == "TRUE":
     enable_acron_debug_logs()
-
-
-def cron_date(timestamp: float, tz: timezone) -> str:
-    fmt = "%Y-%m-%d %H:%M:%S %Z%z"
-    return datetime.fromtimestamp(timestamp).astimezone(tz=tz).strftime(fmt)
-
-
-@dataclasses.dataclass(frozen=True)
-class ScheduledJob:
-    job: Job
-    when: float
-    dry_run: bool
-    event: asyncio.Event = dataclasses.field(default_factory=asyncio.Event)
-    id: str = dataclasses.field(default_factory=lambda: str(uuid.uuid4()))
-
-    async def run(self) -> None:
-        log.debug("[scheduler id=%s] Running scheduled job %s", self.id, self.job.name)
-        start = time.monotonic()
-        token = _job_context.set(JobContext(self))
-        try:
-            # mypy gets confused because we are calling a function but
-            # it looks like we are calling a method.
-            await self.job.func()  # type: ignore
-        finally:
-            _job_context.reset(token)
-            self.event.set()
-            log.debug(
-                "[scheduler id=%s] Done running job %s after %.1f seconds",
-                self.id,
-                self.job.name,
-                time.monotonic() - start,
-            )
-
-
-@dataclasses.dataclass(frozen=True)
-class JobContext:
-    scheduled_job: ScheduledJob
-
-
-_job_context: contextvars.ContextVar[JobContext] = contextvars.ContextVar(
-    "acron_job_context"
-)
-
-
-def job_context() -> JobContext:
-    return _job_context.get()
 
 
 ScheduledJobHandle = Tuple[ScheduledJob, asyncio.TimerHandle]
@@ -149,11 +94,7 @@ def schedule_jobs(
         delta = datetime.fromtimestamp(when).astimezone(tz=tz) - datetime.now(tz=tz)
         # We need to create function here to capture the lexical context of
         # the parameters
-        scheduled_job = ScheduledJob(
-            job=job,
-            when=when,
-            dry_run=dry_run,
-        )
+        scheduled_job = ScheduledJob(job=job, tz=tz, when=when, dry_run=dry_run)
         # We need to call the lambda here because the coroutine needs to be
         # created when the job is launched, otherwise no one is awaiting it
         # and python complains.
@@ -167,7 +108,7 @@ def schedule_jobs(
 
 
 def show_scheduled_jobs_info(
-    scheduled_jobs: Dict[int, List[ScheduledJobHandle]], gen: int, tz: timezone
+    scheduled_jobs: Dict[int, List[ScheduledJobHandle]], gen: int
 ) -> None:
     """
     Show information for the next jobs scheduled.
@@ -178,12 +119,20 @@ def show_scheduled_jobs_info(
     log.info("[scheduler] Next jobs scheduled (generation %d):", gen)
     for scheduled_job, _ in scheduled_jobs.get(gen, []):
         if not scheduled_job.event.is_set():
-            when = cron_date(timestamp=scheduled_job.when, tz=tz)
+            job_str: Optional[str] = None
+            if scheduled_job.job.show:
+                token = _job_context.set(JobContext(scheduled_job))
+                try:
+                    job_str = scheduled_job.job.show(scheduled_job.job.data)
+                finally:
+                    _job_context.reset(token)
+
             log.info(
-                "[scheduler]  * [%s] %s at %s",
+                "[scheduler]  * [%s] %s at %s - %s",
                 scheduled_job.id,
-                scheduled_job.job.name,
-                when,
+                scheduled_job.job.name or "unnamed job",
+                scheduled_job.cron_date,
+                job_str or "no job data",
             )
 
 
@@ -227,9 +176,7 @@ class Scheduler:
             self._last_job_time = None
         elif (now - self._last_scheduled_info).seconds > self._last_scheduled_delay:
             show_scheduled_jobs_info(
-                scheduled_jobs=self._scheduled_jobs,
-                gen=self._generation,
-                tz=self._tz,
+                scheduled_jobs=self._scheduled_jobs, gen=self._generation
             )
             self._last_scheduled_info = now
 
@@ -259,7 +206,7 @@ class Scheduler:
                 dry_run=self._dry_run,
             )
             show_scheduled_jobs_info(
-                scheduled_jobs=self._scheduled_jobs, gen=self._generation, tz=self._tz
+                scheduled_jobs=self._scheduled_jobs, gen=self._generation
             )
 
     def scheduled_jobs(self) -> List[ScheduledJob]:

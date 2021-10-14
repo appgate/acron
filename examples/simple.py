@@ -1,6 +1,7 @@
 import asyncio
 
-from acron.scheduler import Scheduler, Job
+from acron.scheduler import Scheduler
+from acron.job import SimpleJob
 
 
 async def do_the_thing():
@@ -8,7 +9,7 @@ async def do_the_thing():
 
 
 async def run_jobs_forever():
-    do_thing = Job(
+    do_thing = SimpleJob(
         name="Do the thing once a minute", schedule="0/1 * * * *", func=do_the_thing
     )
 

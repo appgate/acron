@@ -6,7 +6,7 @@ if sys.version_info >= (3, 9):
 else:
     from pytz import timezone as ZoneInfo
 
-from acron.scheduler import Scheduler, Job
+import acron
 
 
 async def do_the_thing():
@@ -14,11 +14,10 @@ async def do_the_thing():
 
 
 async def run_jobs_forever():
-    do_thing = Job(name="Do the thing daily", schedule="11 12 * * *", func=do_the_thing)
-
-    async with Scheduler(ZoneInfo("Europe/Berlin")) as scheduler:
-        await scheduler.update_jobs({do_thing})
-        await scheduler.wait()
+    do_thing = acron.SimpleJob(
+        name="Do the thing daily", schedule="14 13 * * *", func=do_the_thing
+    )
+    await acron.run({do_thing}, ZoneInfo("Europe/Berlin"))
 
 
 if __name__ == "__main__":
