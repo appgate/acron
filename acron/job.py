@@ -3,7 +3,7 @@ import contextvars
 import dataclasses
 import logging
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import timezone, datetime
 import time
 from typing import Optional, Callable, Awaitable, Generic, TypeVar, Tuple
@@ -19,8 +19,8 @@ TaskT = TypeVar("TaskT")
 class Job(Generic[TaskT]):
     schedule: str
     data: TaskT
-    func: Callable[[TaskT], Awaitable[None]]
-    show: Optional[Callable[[TaskT], str]] = None
+    func: Callable[[TaskT], Awaitable[None]] = field(compare=False)
+    show: Optional[Callable[[TaskT], str]] = field(default=None, compare=False)
     name: Optional[str] = None
     enabled: bool = True
 

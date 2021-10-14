@@ -108,7 +108,7 @@ def schedule_jobs(
 
 
 def show_scheduled_jobs_info(
-    scheduled_jobs: Dict[int, List[ScheduledJobHandle]], gen: int, tz: timezone
+    scheduled_jobs: Dict[int, List[ScheduledJobHandle]], gen: int
 ) -> None:
     """
     Show information for the next jobs scheduled.
@@ -176,7 +176,7 @@ class Scheduler:
             self._last_job_time = None
         elif (now - self._last_scheduled_info).seconds > self._last_scheduled_delay:
             show_scheduled_jobs_info(
-                scheduled_jobs=self._scheduled_jobs, gen=self._generation, tz=self._tz
+                scheduled_jobs=self._scheduled_jobs, gen=self._generation
             )
             self._last_scheduled_info = now
 
@@ -206,7 +206,7 @@ class Scheduler:
                 dry_run=self._dry_run,
             )
             show_scheduled_jobs_info(
-                scheduled_jobs=self._scheduled_jobs, gen=self._generation, tz=self._tz
+                scheduled_jobs=self._scheduled_jobs, gen=self._generation
             )
 
     def scheduled_jobs(self) -> List[ScheduledJob]:
