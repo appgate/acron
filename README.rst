@@ -18,6 +18,7 @@ Usage
 
 To get started you need at least one job.
 Use the top level ``acron.run`` function for simple scheduling.
+Use ``SimpleJob`` to run a simple async function with no associated data.
 
 
 .. code:: python
@@ -41,7 +42,7 @@ For more advanced use cases, the ``Scheduler`` class can be used as async contex
 Call ``scheduler.wait()`` to keep it running forever.
 To submit jobs call ``scheduler.update_jobs(jobs)`` with the complete set of jobs.
 
-Running a simple example running a function every hour...
+Running an example ``Job`` running a function with associated data every hour...
 
 
 .. code:: python
