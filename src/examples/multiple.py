@@ -1,5 +1,4 @@
 import asyncio
-import functools
 
 from acron.scheduler import Scheduler
 from acron.job import Job

@@ -1,5 +1,4 @@
 import asyncio
-import sys
 from zoneinfo import ZoneInfo
 
 import acron

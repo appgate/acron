@@ -6,7 +6,7 @@ authors = [
   {name = "Aitor Iturri", email = "aitor.iturri@appgate.com"},
   {name = "Thomas Cellerier", email = "thomas.cellerier@appgate.com"}
 ]
-readme = "README.md"
+readme = "README.rst"
 requires-python = ">=3.10"
 dependencies = [
     "croniter>=3.0.3",
