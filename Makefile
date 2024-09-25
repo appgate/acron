@@ -17,6 +17,10 @@ mypy:
 .PHONY: lint
 lint: mypy ruff check-fmt
 
+.PHONY: test
+test:
+	PYTHONPATH=src uv run pytest src/tests
+
 .PHONY: build
 build:
 	uv build
