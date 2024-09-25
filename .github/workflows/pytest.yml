@@ -12,5 +12,5 @@ jobs:
     - name: Install uv
       run: pip install uv
     - name: Run pytest 
-      run: PYTHONPATH=src uv run pytest tests
+      run: PYTHONPATH=src uv run pytest src/tests
 
