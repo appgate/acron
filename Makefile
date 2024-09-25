@@ -14,12 +14,12 @@ ruff:
 mypy:
 	uv run mypy src/acron
 
-.PHONY: lint
-lint: mypy ruff check-fmt
-
 .PHONY: test
 test:
 	PYTHONPATH=src uv run pytest src/tests
+
+.PHONY: lint
+lint: mypy ruff test check-fmt
 
 .PHONY: build
 build:
