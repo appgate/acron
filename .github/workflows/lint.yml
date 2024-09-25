@@ -1,4 +1,4 @@
-name: mypy
+name: lint
 on: [push]
 jobs:
   build:
@@ -12,5 +12,5 @@ jobs:
     - name: Install uv
       run: pip install uv
     - name: Run mypy
-      run: uv run mypy acron examples
+      run: uv run mypy src/acron src/examples
 
