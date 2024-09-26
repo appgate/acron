@@ -21,6 +21,13 @@ test:
 .PHONY: lint
 lint: mypy ruff test check-fmt
 
-.PHONY: build
-build:
+
+dist:
 	uv build
+
+.PHONY: clean
+clean:
+	rm -rf dist
+
+.PHONY: build
+build: dist
