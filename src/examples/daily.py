@@ -1,10 +1,5 @@
 import asyncio
-import sys
-
-if sys.version_info >= (3, 9):
-    from zoneinfo import ZoneInfo
-else:
-    from pytz import timezone as ZoneInfo
+from zoneinfo import ZoneInfo
 
 import acron
 

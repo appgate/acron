@@ -1,3 +1,5 @@
 .idea/
 **/__pycache__
 dist/
+.python-version
+src/acron.egg-info/

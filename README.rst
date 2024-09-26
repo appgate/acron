@@ -83,7 +83,7 @@ Running an example ``Job`` running a function with associated data every hour...
 Specifying a timezone
 ----------------------
 
-For python 3.9+ you can use the standard library's ``zoneinfo`` module to specify a timezone.
+You can use the standard library's ``zoneinfo`` module to specify a timezone.
 
 .. code:: python
 
@@ -92,16 +92,6 @@ For python 3.9+ you can use the standard library's ``zoneinfo`` module to specif
     async with Scheduler(tz=zoneinfo.ZoneInfo("Europe/Berlin")) as scheduler:
         ...
 
-
-
-For earlier python versions you can use a third party library like ``pytz``.
-
-.. code:: python
-
-    import pytz
-
-    async with Scheduler(tz=pytz.timezone("Europe/Berlin")) as scheduler:
-        ...
 
 
 Job context
@@ -124,11 +114,10 @@ using contextvars to provide the correct context to the matching asyncio task.
 Local development
 =================
 
-The project uses poetry to run the test, the linter and to build the artifacts.
+The project uses uv to run the test, the linter and to build the artifacts.
 
 The easiest way to start working on acron is to use docker with the dockerfile
-included in the repository (manual usage of poetry is explained here:
-https://python-poetry.org/docs/ ).
+included in the repository (manual usage of uv is explained here: https://docs.astral.sh/uv/concepts/projects/).
 
 To use docker, first generate the docker image. Run this command from the top
 level directory in the repository:

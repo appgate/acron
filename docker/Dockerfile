@@ -1,16 +1,12 @@
-FROM python:3.9-buster
-ARG POETRY_VERSION
-ENV POETRY_VERSION=${POETRY_VERSION:-1.0.3} \
-    POETRY_NO_INTERACTION=1
+FROM python:3.12-slim
 
 RUN mkdir /build
 COPY pyproject.toml /build
-COPY tests/ /build/tests
-COPY acron/ /build/acron
+COPY src/ /build/src
 
 WORKDIR /build
 
-RUN pip3 install poetry
-RUN poetry install
+RUN pip install uv
+RUN uv install
 
-ENTRYPOINT ["poetry"]
+ENTRYPOINT ["bash"]

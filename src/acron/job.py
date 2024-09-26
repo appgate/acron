@@ -31,7 +31,7 @@ class Job(Generic[TaskT]):
         *,
         show: Optional[Callable[[], str]] = None,
         name: Optional[str] = None,
-        enabled: bool = True
+        enabled: bool = True,
     ) -> "Job[Tuple[()]]":
         return Job[Tuple[()]](
             schedule=schedule,
