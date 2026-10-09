@@ -12,6 +12,14 @@ dependencies = [
     "croniter>=3.0.3",
 ]
 
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["acron"]
+package-dir = {"" = "src"}
+
 [project.urls]
 Homepage = "https://github.com/appgate/acron"
 
