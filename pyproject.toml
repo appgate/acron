@@ -1,6 +1,6 @@
 [project]
 name = "acron"
-version = "0.2.2"
+version = "0.2.3"
 description = "Lightweight asyncio scheduler with cron compatible syntax"
 authors = [
   {name = "Aitor Iturri", email = "aitor.iturri@appgate.com"},
